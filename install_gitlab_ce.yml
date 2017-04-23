@@ -1,0 +1,46 @@
+---
+- name: Install Gitlab CE
+  hosts: all
+
+  tasks:
+
+   - name: Install Packages
+     yum:
+        name: "{{ item }}"
+        state=latest
+     with_items:
+        - curl
+        - policycoreutils
+        - openssh-server
+        - openssh-clients
+        - postfix
+     become: true
+
+   - name: Enable Services
+     service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+     with_items:
+        - sshd
+        - postfix
+     become: true
+
+    - name: Set Firewall Rules
+      firewalld:
+        service: http
+        state: enabled
+        immediate: true
+        permanent: true
+      become: true
+
+    - name: Install gitlab rpm
+      yum:
+         name: "https://packages.gitlab.com/gitlab/gitlab-ce/packages/el/7/gitlab-ce-9.1.0-ce.0.el7.x86_64.rpm/download"
+         state: present
+      become: true
+
+
+    - name: Configure and Start Gitlab
+      shell: gitlab-ctl reconfigure
+      become: true
